@@ -69,6 +69,7 @@ let dealerIsStanding = false;
 let playerScore = 0;
 const gameState = document.getElementById("gameState");
 let gameEnded = false
+let standing = false
 
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -134,35 +135,43 @@ async function dealerHit() {
 }
 
 async function stand(){
-    while(!dealerIsStanding){
-        dealerHit()
-    }
-    await sleep(1000)
-    dealerState.textContent = "3"
-    await sleep(1000)
-    dealerState.textContent = "2"
-    await sleep(1000)
-    dealerState.textContent = "1"
-    await sleep(1000)
-    dealerState.textContent = `dealers score: ${dealerScore}`
-    dealer.textContent = DealerDrawnCards.map(card => card.card).join(', ');
-    if (dealerScore <= playerScore && playerScore < 21){
-        if(dealerScore < playerScore){
-            gameState.innerText = "You won !!!, click reset to play again"
-        } else if (dealerScore == playerScore){
-            gameState.innerText = "Push, dealer takes it!"
+    if (!standing){
+        standing = true;
+        while(!dealerIsStanding){
+            dealerHit()
         }
-    } else if (playerScore === 21){
-        gameState.innerText = "BLACK JACK!!!"
-    }
-    else {
-        if (dealerScore > 21 && playerScore < dealerScore){
-            gameState.innerText = "You won !!!, click reset to play again"
-        } else {
-            gameState.innerText = "You lost, reset to try again"
+        await sleep(1000)
+        dealerState.textContent = "3"
+        await sleep(1000)
+        dealerState.textContent = "2"
+        await sleep(1000)
+        dealerState.textContent = "1"
+        await sleep(1000)
+        dealerState.textContent = `dealers score: ${dealerScore}`
+        dealer.textContent = DealerDrawnCards.map(card => card.card).join(', ');
+        if (dealerScore <= playerScore && playerScore < 21){
+            if(dealerScore < playerScore){
+                gameState.innerText = "You won !!!, click reset to play again"
+            } else if (dealerScore == playerScore){
+                gameState.innerText = "Push, dealer takes it!"
+            }
+        } else if (playerScore === 21){
+            gameState.innerText = "BLACK JACK!!!"
         }
+        else {
+            if (dealerScore > 21 && playerScore < dealerScore){
+                gameState.innerText = "You won !!!, click reset to play again"
+            } else if (dealerScore > 21 && playerScore === dealerScore){
+                gameState.innerText = "Push, dealer takes it all!"
+            } else {
+                gameState.innerText = "You lost, reset to try again"
+            }
+
+        } 
+        gameEnded = true
+    } else if (gameEnded){
+        gameState.innerText = "reset to play again!"
     }
-    gameEnded = true
 }
 
 function reset() {
@@ -176,7 +185,8 @@ function reset() {
     playerScore = 0;
     dealerState.innerText = "";
     gameEnded =false;
-    gameState.innerText = ""
+    gameState.innerText = "";
+    standing = false;
     deck = [
         { card: '2♥', value: 2 },
         { card: '3♥', value: 3 },
