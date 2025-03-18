@@ -70,13 +70,18 @@ let playerScore = 0;
 const gameState = document.getElementById("gameState");
 let gameEnded = false
 let standing = false
+let hitting = false
+let money = 100
+let won = false
+const betInput = document.getElementById("betInput")
+const moneyCounter = document.getElementById("money")
 
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 async function hit() {
-    if (!gameEnded){    
+    if (!gameEnded && !hitting){    
         if (deck.length === 0) {
             console.log('No more cards');
             return;
@@ -94,11 +99,17 @@ async function hit() {
             }
             playerState.textContent = `score: ${playerScore}`;
             cardCounter.textContent = `${deck.length}/52 cards`;
-            await sleep(1500);
+            hitting = true
+            await sleep(1000);
+            hitting = false
             dealerHit();
+
         }
-    }else{
-        dealerState.innerText = "reset to play again !"
+    } else if (hitting){
+        console.log("meow")
+    }else {
+        reset();
+        hit()
     }
 }
 
@@ -124,7 +135,7 @@ async function dealerHit() {
                 dealer.textContent = DealerDrawnCards.map(card => card.card).join(', ');
                 hasDrawn = true;
             } else {
-                dealer.textContent = DealerDrawnCards[0].card + ', ???';
+                dealer.textContent = DealerDrawnCards[0].card + ' ???'.repeat(DealerDrawnCards.length - 1);
             } 
             cardCounter.textContent = `${deck.length}/52 cards`   
         } else {
@@ -135,11 +146,13 @@ async function dealerHit() {
 }
 
 async function stand(){
-    if (!standing){
+    if (!standing && money >= userBet && userBet > 1){
         standing = true;
         while(!dealerIsStanding){
+            await sleep(500)
             dealerHit()
         }
+        hitting = true
         await sleep(1000)
         dealerState.textContent = "3"
         await sleep(1000)
@@ -147,30 +160,57 @@ async function stand(){
         await sleep(1000)
         dealerState.textContent = "1"
         await sleep(1000)
+        hitting = false
         dealerState.textContent = `dealers score: ${dealerScore}`
         dealer.textContent = DealerDrawnCards.map(card => card.card).join(', ');
         if (dealerScore <= playerScore && playerScore < 21){
             if(dealerScore < playerScore){
-                gameState.innerText = "You won !!!, click reset to play again"
+                gameState.innerText = "You won !!!, click reset to play again";
+                won = true
             } else if (dealerScore == playerScore){
                 gameState.innerText = "Push, dealer takes it!"
+                won = false
             }
-        } else if (playerScore === 21){
+        } else if (playerScore === 21 && drawnCards.length === 2){
             gameState.innerText = "BLACK JACK!!!"
-        }
-        else {
+            won = true
+        } else if (playerScore === 21 && drawnCards.length !== 2 && dealerScore === playerScore){
+            gameState.innerText = "Push, dealer takes it!"
+            won = false
+        } else {
             if (dealerScore > 21 && playerScore < dealerScore){
-                gameState.innerText = "You won !!!, click reset to play again"
+                gameState.innerText = "You won !!!, click reset to play again";
+                won = true
             } else if (dealerScore > 21 && playerScore === dealerScore){
-                gameState.innerText = "Push, dealer takes it all!"
-            } else {
+                gameState.innerText = "Push, dealer takes it all!";
+                won = false
+            } else if (playerScore === 21 && playerScore !== dealerScore){
+                gameState.innerText = "You won!!! click reset to play again";
+                won = true
+            }else {
                 gameState.innerText = "You lost, reset to try again"
+                won = false
             }
 
         } 
-        gameEnded = true
-    } else if (gameEnded){
-        gameState.innerText = "reset to play again!"
+        gameEnded = true;
+        calculateMoney()
+    } else if (!(money >= userBet && userBet > 1)){
+        gameState.innerText = "choose a valid bet"
+        await sleep(1000)
+        gameState.innerText =""
+    }else if (gameEnded){
+        reset()
+    }
+}
+
+function calculateMoney(){
+    if (won){
+        money = money + (userBet * 2)
+        moneyCounter.innerText = `${money} $`
+    } else if (!won){
+        money = money - (userBet)
+        moneyCounter.innerText = `${money} $`
     }
 }
 
@@ -248,6 +288,10 @@ function reset() {
     playerState.textContent = `0`
 }
 
+function resetMoney(){
+    money = 100
+}
+
 function shuffle(){
     deck = [
         { card: '2♥', value: 2 },
@@ -308,3 +352,7 @@ function shuffle(){
     ];    
     cardCounter.textContent = `${deck.length}/52 cards`  
 }
+
+betInput.addEventListener('input', () => {
+    userBet = (betInput.value);
+});
