@@ -290,6 +290,7 @@ function reset() {
 
 function resetMoney(){
     money = 100
+    moneyCounter.textContent = `${money} $`
 }
 
 function shuffle(){
