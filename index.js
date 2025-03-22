@@ -206,7 +206,7 @@ async function stand(){
 
 function calculateMoney(){
     if (won){
-        money = money + (userBet * 2)
+        money = money + (userBet)
         moneyCounter.innerText = `${money} $`
     } else if (!won){
         money = money - (userBet)
